@@ -3,12 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Calculadora SII OD/OI</title>
+  <title>Calculadora SII</title>
   <meta name="theme-color" content="#0d2340" />
-  <meta name="description" content="Calculadora SII OD/OI para habla a 65 dB SPL." />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="description" content="Calculadora SII para habla a 65 dB SPL." />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Calculadora SII" />
   <style>
     :root{
       --navy:#0d2340;
@@ -131,7 +135,7 @@
 </head>
 <body>
   <header>
-    <h1>Calculadora SII OD/OI</h1>
+    <h1>Calculadora SII</h1>
     <p>Habla a 65 dB SPL · ANSI S3.5-1997</p>
   </header>
 
@@ -145,8 +149,8 @@
     <section class="card">
       <div class="grid" id="inputsGrid">
         <div class="head">Frecuencia</div>
-        <div class="head">OD</div>
-        <div class="head">OI</div>
+        <div class="head">Derecho</div>
+        <div class="head">Izquierdo</div>
       </div>
       <div id="error" class="error hidden"></div>
     </section>
