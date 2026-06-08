@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Calculadora SII OD/OI - ANSI corregida</title>
+  <style>
+    :root{
+      --navy:#0d2340;
+      --teal:#1a7a7a;
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --line:#d9e2ec;
+      --muted:#64748b;
+      --text:#102033;
+      --ok:#13795b;
+      --warn:#b45309;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    header{
+      background:var(--navy);
+      color:#fff;
+      padding:18px 16px 16px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      box-shadow:0 2px 10px rgba(0,0,0,.18);
+    }
+    header h1{margin:0;font-size:1.2rem;line-height:1.2}
+    header p{margin:5px 0 0;color:#d7eef0;font-size:.9rem}
+    main{max-width:760px;margin:0 auto;padding:14px 12px 90px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      margin-bottom:12px;
+      box-shadow:0 4px 14px rgba(15,23,42,.05);
+    }
+    .note{font-size:.88rem;color:var(--muted);line-height:1.4;margin:0}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      gap:8px;
+      align-items:center;
+    }
+    .head{
+      font-weight:700;
+      color:var(--navy);
+      padding:6px 4px;
+      border-bottom:2px solid var(--teal);
+      text-align:center;
+    }
+    .freq{
+      font-weight:700;
+      color:var(--navy);
+      padding-left:4px;
+    }
+    input[type="number"]{
+      width:100%;
+      min-height:44px;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      padding:9px 8px;
+      font-size:1rem;
+      text-align:center;
+      background:#fff;
+    }
+    input[type="number"]:focus{
+      outline:3px solid rgba(26,122,122,.18);
+      border-color:var(--teal);
+    }
+    .actions{
+      position:fixed;
+      left:0;right:0;bottom:0;
+      background:rgba(246,248,251,.92);
+      backdrop-filter:blur(8px);
+      border-top:1px solid var(--line);
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    }
+    .actions-inner{max-width:760px;margin:0 auto;display:flex;gap:8px}
+    button{
+      border:0;
+      border-radius:14px;
+      min-height:48px;
+      font-weight:800;
+      font-size:1rem;
+      cursor:pointer;
+      padding:0 14px;
+    }
+    .primary{background:var(--teal);color:#fff;flex:1}
+    .secondary{background:#e2e8f0;color:var(--navy)}
+    .results{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .resultBox{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 10px;
+      text-align:center;
+      background:#fbfdff;
+    }
+    .label{font-size:.85rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .value{font-size:2rem;font-weight:900;color:var(--navy);line-height:1.1;margin-top:4px}
+    .percent{font-size:.98rem;color:var(--teal);font-weight:800;margin-top:2px}
+    .hidden{display:none}
+    .error{color:#b91c1c;font-weight:700;margin-top:8px;font-size:.92rem}
+    details summary{cursor:pointer;font-weight:800;color:var(--navy)}
+    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.86rem}
+    th,td{border-bottom:1px solid var(--line);padding:6px;text-align:right}
+    th:first-child,td:first-child{text-align:left}
+    th{color:var(--navy)}
+    @media (max-width:420px){
+      main{padding-left:8px;padding-right:8px}
+      .card{padding:12px;border-radius:16px}
+      .grid{grid-template-columns:.9fr 1fr 1fr;gap:6px}
+      input[type="number"]{font-size:.96rem;padding:8px 4px}
+      .value{font-size:1.75rem}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Calculadora SII OD/OI</h1>
+    <p>Sin guardar datos · cálculo local en el navegador</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <p class="note">
+        Introduce los umbrales en <strong>dB HL</strong>. La calculadora estima el SII para habla a 65 dB SPL en silencio, según la hoja ANSI S3.5-1997 aportada. Las frecuencias intermedias de 1/3 de octava se interpolan logarítmicamente.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="grid" id="inputsGrid">
+        <div class="head">Frecuencia</div>
+        <div class="head">OD</div>
+        <div class="head">OI</div>
+      </div>
+      <div id="error" class="error hidden"></div>
+    </section>
+
+    <section class="card hidden" id="resultCard">
+      <div class="label">Resultado</div>
+      <div class="results">
+        <div class="resultBox">
+          <div class="label">Oído derecho</div>
+          <div class="value" id="siiOD">—</div>
+          <div class="percent" id="siiODpct">—</div>
+        </div>
+        <div class="resultBox">
+          <div class="label">Oído izquierdo</div>
+          <div class="value" id="siiOI">—</div>
+          <div class="percent" id="siiOIpct">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary>Ver detalle técnico</summary>
+        <p class="note" style="margin-top:10px">
+          Fórmula base por banda: SII banda = importancia de banda × factor de distorsión × audibilidad. Esta versión incluye la propagación del enmascaramiento entre bandas inferiores, como en la hoja ANSI. Ruido equivalente fijado en -80 dB SPL.
+        </p>
+        <table>
+          <thead>
+            <tr><th>Banda</th><th>Importancia</th><th>Habla SPL</th></tr>
+          </thead>
+          <tbody id="techTable"></tbody>
+        </table>
+      </details>
+    </section>
+  </main>
+
+  <div class="actions">
+    <div class="actions-inner">
+      <button class="secondary" type="button" onclick="clearAll()">Limpiar</button>
+      <button class="primary" type="button" onclick="calculate()">Calcular SII</button>
+    </div>
+  </div>
+
+<script>
+  // Frecuencias que introduce el usuario.
+  const inputFreqs = [250,500,750,1000,1500,2000,3000,4000,6000,8000];
+
+  // Tabla tomada de la hoja ANSI S3.5-1997 aportada por el usuario.
+  // f: centro de banda 1/3 octava; E: espectro de habla normal en dB SPL; I: importancia de banda; X: ruido interno de referencia.
+  const bands = [
+    {f:160, E:32.41, I:0.0083, X:0.6},
+    {f:200, E:34.48, I:0.0095, X:-1.7},
+    {f:250, E:34.75, I:0.0150, X:-3.9},
+    {f:315, E:33.98, I:0.0289, X:-6.1},
+    {f:400, E:34.59, I:0.0440, X:-8.2},
+    {f:500, E:34.27, I:0.0578, X:-9.7},
+    {f:630, E:32.06, I:0.0653, X:-10.8},
+    {f:800, E:28.30, I:0.0711, X:-11.9},
+    {f:1000, E:25.01, I:0.0818, X:-12.5},
+    {f:1250, E:23.00, I:0.0844, X:-13.5},
+    {f:1600, E:20.15, I:0.0882, X:-15.4},
+    {f:2000, E:17.32, I:0.0898, X:-17.7},
+    {f:2500, E:13.18, I:0.0868, X:-21.2},
+    {f:3150, E:11.55, I:0.0844, X:-24.2},
+    {f:4000, E:9.33, I:0.0771, X:-25.9},
+    {f:5000, E:5.31, I:0.0527, X:-23.6},
+    {f:6300, E:2.59, I:0.0364, X:-15.8},
+    {f:8000, E:1.13, I:0.0185, X:-7.1}
+  ];
+
+  function buildInputs(){
+    const grid = document.getElementById('inputsGrid');
+    inputFreqs.forEach(f => {
+      const freq = document.createElement('div');
+      freq.className = 'freq';
+      freq.textContent = f + ' Hz';
+      grid.appendChild(freq);
+
+      ['OD','OI'].forEach(ear => {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.inputMode = 'decimal';
+        input.step = '5';
+        input.min = '-10';
+        input.max = '130';
+        input.placeholder = 'dB HL';
+        input.id = ear + '_' + f;
+        input.setAttribute('aria-label', ear + ' ' + f + ' Hz');
+        grid.appendChild(input);
+      });
+    });
+  }
+
+  function buildTechTable(){
+    const tbody = document.getElementById('techTable');
+    tbody.innerHTML = bands.map(b => `<tr><td>${b.f} Hz</td><td>${b.I.toFixed(4)}</td><td>${b.E.toFixed(2)}</td></tr>`).join('');
+  }
+
+  function getEarValues(ear){
+    const values = {};
+    for (const f of inputFreqs){
+      const raw = document.getElementById(`${ear}_${f}`).value;
+      if (raw === '' || isNaN(Number(raw))) throw new Error(`Falta un valor en ${ear}, ${f} Hz.`);
+      const v = Number(raw);
+      if (v < -10 || v > 130) throw new Error(`Valor fuera de rango en ${ear}, ${f} Hz.`);
+      values[f] = v;
+    }
+    return values;
+  }
+
+  function interpThreshold(values, targetFreq){
+    if (values[targetFreq] !== undefined) return values[targetFreq];
+
+    const freqs = inputFreqs;
+    if (targetFreq <= freqs[0]) return values[freqs[0]];
+    if (targetFreq >= freqs[freqs.length - 1]) return values[freqs[freqs.length - 1]];
+
+    let f1 = freqs[0], f2 = freqs[freqs.length - 1];
+    for (let i=0; i<freqs.length-1; i++){
+      if (targetFreq >= freqs[i] && targetFreq <= freqs[i+1]){
+        f1 = freqs[i];
+        f2 = freqs[i+1];
+        break;
+      }
+    }
+    const x = Math.log(targetFreq);
+    const x1 = Math.log(f1);
+    const x2 = Math.log(f2);
+    const ratio = (x - x1) / (x2 - x1);
+    return values[f1] + ratio * (values[f2] - values[f1]);
+  }
+
+  function clamp(v, min, max){
+    return Math.min(max, Math.max(min, v));
+  }
+
+  function siiFromValues(values){
+    // Implementación directa del método de 1/3 de octava de la hoja ANSI S3.5-1997.
+    // Habla: espectro normal del Excel. Ruido: -80 dB SPL en todas las bandas.
+    const noise = -80;
+    const rows = bands.map(b => {
+      const T = interpThreshold(values, b.f);       // B: Ti'
+      const V = b.E - 24;                          // H: self-speech masking
+      const B = Math.max(noise, V);                // I: mayor entre ruido y automascaramiento
+      const C = -80 + 0.6 * ((B + 10 * Math.log10(b.f)) - 6.353); // J
+      const Xp = b.X + T;                          // L: ruido interno equivalente
+      return {...b, T, V, B, C, Xp};
+    });
+
+    for (let i = 0; i < rows.length; i++){
+      const ri = rows[i];
+      let energy = Math.pow(10, 0.1 * noise);
+
+      // K: Zi, nivel equivalente de enmascaramiento, incluyendo propagación
+      // del enmascaramiento desde todas las bandas inferiores.
+      for (let j = 0; j < i; j++){
+        const rj = rows[j];
+        const spread = rj.B + 3.32 * rj.C * Math.log10(0.89 * ri.f / rj.f);
+        energy += Math.pow(10, 0.1 * spread);
+      }
+      ri.Z = 10 * Math.log10(energy);
+      ri.D = Math.max(ri.Z, ri.Xp);                // M
+      ri.L = Math.min(1, 1 - (ri.E - ri.E - 10) / 160); // N, con habla normal U=E => 1
+      ri.K = clamp((ri.E - ri.D + 15) / 30, 0, 1); // O
+      ri.A = ri.L * ri.K;                          // P
+    }
+
+    const total = rows.reduce((sum, r) => sum + r.I * r.A, 0);
+    return clamp(total, 0, 1);
+  }
+
+  function calculate(){
+    const error = document.getElementById('error');
+    error.classList.add('hidden');
+    error.textContent = '';
+
+    try{
+      const od = getEarValues('OD');
+      const oi = getEarValues('OI');
+      const siiOD = siiFromValues(od);
+      const siiOI = siiFromValues(oi);
+
+      document.getElementById('siiOD').textContent = siiOD.toFixed(3);
+      document.getElementById('siiOI').textContent = siiOI.toFixed(3);
+      document.getElementById('siiODpct').textContent = Math.round(siiOD * 100) + ' %';
+      document.getElementById('siiOIpct').textContent = Math.round(siiOI * 100) + ' %';
+      document.getElementById('resultCard').classList.remove('hidden');
+      window.scrollTo({top: document.getElementById('resultCard').offsetTop - 80, behavior:'smooth'});
+    }catch(e){
+      error.textContent = e.message;
+      error.classList.remove('hidden');
+      document.getElementById('resultCard').classList.add('hidden');
+    }
+  }
+
+  function clearAll(){
+    for (const f of inputFreqs){
+      document.getElementById(`OD_${f}`).value = '';
+      document.getElementById(`OI_${f}`).value = '';
+    }
+    document.getElementById('resultCard').classList.add('hidden');
+    document.getElementById('error').classList.add('hidden');
+  }
+
+  buildInputs();
+  buildTechTable();
+</script>
+</body>
+</html>
