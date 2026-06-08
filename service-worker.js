@@ -1,8 +1,9 @@
-const CACHE_NAME = 'sii-calculadora-v1';
+const CACHE_NAME = 'sii-calculadora-v4';
 const APP_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-icon-512.png'
@@ -36,3 +37,4 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
